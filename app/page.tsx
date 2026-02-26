@@ -94,7 +94,7 @@ export default function Home() {
         animate={{ y: 0, opacity: 1 }}
         className="z-10 w-full max-w-md bg-slate-900/90 backdrop-blur-3xl p-8 rounded-[3rem] border border-white/10 shadow-2xl text-center"
       >
-        <h2 className="text-3xl font-bold text-yellow-400 mb-6 font-arabic shadow-sm">مسحراتي الذكاء الاصطناعي 🤖</h2>
+        <h2 className="text-3xl font-bold text-yellow-400 mb-6 font-arabic shadow-sm"> مسحراتيي عمي عأطا 🤖</h2>
 
         {/* عرض صورة الطبلة وعليها الاسم */}
         <div className="relative mb-6 flex justify-center">
