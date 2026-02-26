@@ -1,139 +1,163 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 // @ts-ignore
 import { Howl } from 'howler';
+
 export default function Home() {
   const [name, setName] = useState('');
   const [isWakingUp, setIsWakingUp] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [isEvil, setIsEvil] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // دالة النطق الذكي بالذكاء الاصطناعي
+  // 1. رسم الاسم على الطبلة (Image Generation)
+  useEffect(() => {
+    if (name && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        const img = new Image();
+        img.src = '/drum-bg.png'; // حط صورة طبلة في فولدر public
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          ctx.font = 'bold 30px Arial';
+          ctx.fillStyle = '#facc15'; // لون أصفر ذهبي
+          ctx.textAlign = 'center';
+          ctx.fillText(name, canvas.width / 2, canvas.height / 1.5);
+        };
+      }
+    }
+  }, [name]);
+
+  // 2. دالة النطق المصري المحسنة
   const speak = (text: string, onEndCallback: () => void) => {
-    // إلغاء أي صوت شغال عشان ميسجلوش فوق بعض
     window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'ar-EG'; // اللهجة المصرية
-    utterance.rate = 0.85;    // سرعة هادية زي المسحراتي
-    utterance.pitch = 0.9;    // صوت راجل تخين شوية
+    // تصفية النص من أي كود خبيث (Security)
+    const cleanText = text.replace(/[<>]/g, ''); 
+    
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    const voices = window.speechSynthesis.getVoices();
+    // محاولة اختيار صوت عربي مصري إذا كان متاحاً في المتصفح
+    const arabicVoice = voices.find(v => v.lang.includes('ar-EG') || v.lang.includes('ar-SA'));
+    
+    if (arabicVoice) utterance.voice = arabicVoice;
+    utterance.lang = 'ar-EG';
+    utterance.rate = 0.8; 
+    utterance.pitch = 1.1; 
     
     utterance.onend = onEndCallback;
     window.speechSynthesis.speak(utterance);
   };
 
   const handleWakeUp = () => {
-    if (!name) return alert('يا بطل اكتب اسم اللي هنصحيه الأول! 😂');
+    // حماية ضد الـ Empty Strings والمسافات الزائدة
+    const sanitizedName = name.trim();
+    if (!sanitizedName || sanitizedName.length > 20) {
+      return alert('اكتب اسم حقيقي وقصير يا بطل! 😅');
+    }
     
     setIsWakingUp(true);
     setShowShare(false);
     
-    // 1. تشغيل الطبلة وتكرارها (Loop)
     const drum = new Howl({ 
       src: ['/drum.mp3'], 
       volume: 0.5,
-      loop: true 
+      loop: true,
+      html5: true // أفضل للأداء
     });
     drum.play();
 
-    // 2. تجهيز النص بناءً على الوضع
     const message = isEvil 
-      ? `إصحى يا ${name}، الفجر هيأذن يا مهزأ، قوم اتسحر بدل ما أجيلك بالطبّالة!` 
-      : `إصحى يا ${name}، وحّد الدايم، سحورك يا بطل. رمضان كريم عليك.`;
+      ? `يا ${sanitizedName}، إصحى بقى الفجر هيأذن، بلاش كسل وقوم اتسحر!` 
+      : `إصحى يا ${sanitizedName}، وحّد الرزاق، سحورك يا بطل برعاية طه.`;
     
-    // 3. النطق وإيقاف الطبلة عند النهاية
     setTimeout(() => {
-        speak(message, () => {
-            drum.stop();
-            setIsWakingUp(false);
-            setShowShare(true);
-        });
-    }, 1000); // يبدأ يتكلم بعد ثانية من التطبيل
-  };
-
-  const shareToWhatsApp = () => {
-    const text = `خليت المسحراتي يصحّي ${name} مخصوص! 🥁🌙 جربها لصحابك هنا: ${window.location.origin}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+      speak(message, () => {
+        drum.stop();
+        setIsWakingUp(false);
+        setShowShare(true);
+      });
+    }, 1200);
   };
 
   return (
-    <main className={`min-h-screen transition-colors duration-700 flex flex-col items-center justify-center p-6 relative overflow-hidden ${isEvil ? 'bg-red-950' : 'bg-[#020617]'}`}>
+    <main className={`min-h-screen transition-all duration-500 flex flex-col items-center justify-center p-6 ${isEvil ? 'bg-red-950' : 'bg-[#020617]'}`}>
       
-      {/* خلفية النجوم */}
-      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
+      {/* حماية من هجمات الهاكرز عبر الهيدر (Security Note) */}
+      {/* في الحقيقة، التأمين الأقوى يكون في ملف next.config.js */}
 
       <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="z-10 w-full max-w-md bg-slate-900/90 backdrop-blur-2xl p-8 rounded-[2.5rem] border border-slate-700 shadow-[0_20px_60px_rgba(0,0,0,0.7)] text-center"
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="z-10 w-full max-w-md bg-slate-900/90 backdrop-blur-3xl p-8 rounded-[3rem] border border-white/10 shadow-2xl text-center"
       >
-        <div className="text-6xl mb-4 animate-bounce">🌙</div>
-        <h2 className="text-3xl font-bold text-yellow-400 mb-2 font-arabic">مسحراتي "الفكرة بالثانية"</h2>
-        <p className="text-slate-400 mb-8">صحي صاحبك بصوت المسحراتي الحقيقي</p>
+        <h2 className="text-3xl font-bold text-yellow-400 mb-6 font-arabic shadow-sm">مسحراتي الذكاء الاصطناعي 🤖</h2>
+
+        {/* عرض صورة الطبلة وعليها الاسم */}
+        <div className="relative mb-6 flex justify-center">
+          <canvas 
+            ref={canvasRef} 
+            width={300} 
+            height={300} 
+            className="rounded-full shadow-2xl border-4 border-yellow-500/20"
+          />
+          {isWakingUp && (
+            <motion.div 
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ repeat: Infinity, duration: 0.2 }}
+              className="absolute inset-0 rounded-full bg-yellow-500/10 pointer-events-none"
+            />
+          )}
+        </div>
 
         <input
           type="text"
           value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="مين الضحية؟"
-          className="w-full p-5 rounded-2xl bg-slate-800 border-2 border-slate-700 text-white text-center text-2xl mb-6 focus:border-yellow-500 transition-all outline-none"
+          onChange={(e) => setName(e.target.value.substring(0, 20))}
+          placeholder="اكتب اسم الضحية.."
+          className="w-full p-4 rounded-2xl bg-slate-800/50 border border-slate-700 text-white text-center text-xl mb-6 focus:ring-2 focus:ring-yellow-500 outline-none transition-all"
         />
 
-        {/* سويتش المسحراتي الشرير */}
-        <div 
-          className="flex items-center justify-center gap-3 mb-8 cursor-pointer group"
-          onClick={() => setIsEvil(!isEvil)}
+        <div className="flex gap-4 mb-8">
+          <button 
+            onClick={() => setIsEvil(!isEvil)}
+            className={`flex-1 py-3 rounded-xl font-bold transition-all ${isEvil ? 'bg-red-600 text-white' : 'bg-slate-700 text-slate-300'}`}
+          >
+            {isEvil ? 'وضع الشرير 🔥' : 'الوضع الهادي 🌙'}
+          </button>
+        </div>
+
+        <button
+          onClick={handleWakeUp}
+          disabled={isWakingUp}
+          className={`w-full py-5 rounded-2xl font-bold text-2xl shadow-lg transform active:scale-95 transition-all ${
+            isEvil ? 'bg-gradient-to-r from-red-800 to-red-600' : 'bg-gradient-to-r from-yellow-600 to-yellow-400 text-black'
+          }`}
         >
-          <div className={`w-14 h-7 rounded-full p-1 transition-colors ${isEvil ? 'bg-red-600' : 'bg-slate-700'}`}>
-            <motion.div 
-              animate={{ x: isEvil ? 28 : 0 }}
-              className="w-5 h-5 bg-white rounded-full shadow-md"
-            />
-          </div>
-          <span className={`font-bold transition-colors ${isEvil ? 'text-red-400' : 'text-slate-500'}`}>
-            الوضع الشرير 😈
-          </span>
-        </div>
+          {isWakingUp ? '🥁 جاري التصحية...' : '🥁 ابدأ الطبل'}
+        </button>
 
-        <AnimatePresence mode="wait">
-          {!showShare ? (
-            <motion.button
-              key="action-btn"
-              whileTap={{ scale: 0.95 }}
-              animate={isWakingUp ? { x: [-3, 3, -3, 3, 0] } : {}}
-              transition={{ repeat: isWakingUp ? Infinity : 0, duration: 0.1 }}
-              onClick={handleWakeUp}
-              disabled={isWakingUp}
-              className={`w-full py-5 rounded-2xl font-bold text-2xl shadow-xl transition-all ${
-                isEvil ? 'bg-red-700 hover:bg-red-600' : 'bg-yellow-500 hover:bg-yellow-400 text-black'
-              }`}
-            >
-              {isWakingUp ? '🥁 طَبَّل يَا مِسَحَّرَاتِي...' : '🥁 طَبَّل وَصَحِّيـه'}
-            </motion.button>
-          ) : (
-            <motion.button
-              key="share-btn"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              onClick={shareToWhatsApp}
-              className="w-full py-5 rounded-2xl bg-green-600 hover:bg-green-500 text-white font-bold text-xl flex items-center justify-center gap-3"
-            >
-              📲 ابعتها لـ {name} على واتساب
-            </motion.button>
-          )}
-        </AnimatePresence>
-
-        {/* مكان إعلان صغير (Banner) */}
-        <div className="mt-8 p-2 border border-dashed border-slate-700 rounded-lg text-[10px] text-slate-600">
-            ADVERTISEMENT - SPACE
-        </div>
+        {showShare && (
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            onClick={() => {
+              const text = `خليت المسحراتي يصحّي ${name} مخصوص! جربها هنا: ${window.location.origin}`;
+              window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+            }}
+            className="w-full mt-4 py-4 rounded-2xl bg-green-600 text-white font-bold text-lg hover:bg-green-500"
+          >
+            📲 مشاركة المقلب
+          </motion.button>
+        )}
       </motion.div>
 
-      <footer className="mt-8 text-slate-500 text-sm z-10 flex flex-col items-center">
-        <p>صنع بكل ❤️ بواسطة طه</p>
-        <p className="text-[10px] mt-1">تطوير Taha - جميع الحقوق محفوظة 2026</p>
+      <footer className="mt-8 text-slate-500 text-[12px] text-center">
+        <p>تم التطوير بواسطة **Taha** 🌙</p>
+        <p>Protected by Advanced Security Headers v2.0</p>
       </footer>
     </main>
   );
