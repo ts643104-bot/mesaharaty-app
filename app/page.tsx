@@ -157,7 +157,7 @@ export default function Home() {
 
       <footer className="mt-8 text-slate-500 text-[12px] text-center">
         <p>تم التطوير بواسطة **Taha** 🌙</p>
-        <p>كل سنه وانتم طيبن </p>
+        <p>محفوظه حقوقه الطبعه و النشر  Taha</p>
       </footer>
     </main>
   );
