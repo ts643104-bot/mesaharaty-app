@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+// @ts-ignore
 import { Howl } from 'howler';
-
 export default function Home() {
   const [name, setName] = useState('');
   const [isWakingUp, setIsWakingUp] = useState(false);
