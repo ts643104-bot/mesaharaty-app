@@ -25,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <head>
-        {/* كود أرباح جوجل أدسنس الخاص بطه */}
+        {/* كود أرباح جوجل أدسنس المحدث الخاص بطه */}
         <script 
           async 
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2972377931989464"
