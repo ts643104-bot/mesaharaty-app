@@ -9,57 +9,58 @@ export default function Home() {
   const [name, setName] = useState('');
   const [isWakingUp, setIsWakingUp] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [isEvil, setIsEvil] = useState(false); // نظام التبديل بين الوضعين
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // رسم الاسم على شكل "شعار شرير" باحترافية
+  // رسم الاسم على الطبلة (لوجو)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
         const img = new Image();
-        img.src = '/drum-bg.png'; // الصورة الأصلية للمسحراتي
+        img.src = '/drum-bg.png';
         img.onload = () => {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
-          
-          // رسم الصورة بشكل دائري مع تأثير "الظل الأحمر الشرقي"
           ctx.save();
           ctx.beginPath();
           ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, 0, Math.PI * 2);
-          ctx.closePath();
           ctx.clip();
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           ctx.restore();
 
-          // إضافة الاسم بتنسيق "شعار شرير" (أحمر ناري مع ظل أسود عميق)
           if (name) {
-            ctx.shadowColor = "rgba(255, 0, 0, 0.9)"; // ظل أحمر توهجي
+            // تغيير لون الاسم بناءً على الوضع
             ctx.shadowBlur = 15;
-            ctx.shadowOffsetX = 3;
-            ctx.shadowOffsetY = 3;
-            
-            ctx.font = 'bold 36px Arial'; // تكبير الخط وتوضيحه
-            ctx.fillStyle = '#ef4444'; // اللون الأحمر الناري
+            ctx.shadowColor = isEvil ? "rgba(255, 0, 0, 0.8)" : "rgba(0, 0, 0, 0.5)";
+            ctx.font = 'bold 34px Arial';
+            ctx.fillStyle = isEvil ? '#ef4444' : '#facc15'; 
             ctx.textAlign = 'center';
             ctx.fillText(name, canvas.width / 2, canvas.height / 1.55);
           }
         };
       }
     }
-  }, [name]);
+  }, [name, isEvil]);
 
   const handleWakeUp = () => {
-    if (!name.trim()) return alert('اكتب اسم الأول يا بطل!');
+    if (!name.trim()) return alert('اكتب اسم الشخص الأول!');
     
     setIsWakingUp(true);
     setShowShare(false);
     
-    const drum = new Howl({ src: ['/drum.mp3'], volume: 0.3, loop: true });
+    // 1. إعداد الصوت البشري (يشتغل أولاً)
     const manVoice = new Howl({ 
-      src: ['/man-voice-evil.mp3'], // تأكد من وجود ملف الصوت الشرير في public
+      src: [isEvil ? '/man-voice-evil.mp3' : '/man-voice-normal.mp3'], 
       volume: 1.0,
+      onplay: () => {
+        // 2. تشغيل الطبلة بعد بدء الصوت البشري بـ 1.5 ثانية (حسب طلبك)
+        setTimeout(() => {
+          drum.play();
+        }, 1500);
+      },
       onend: () => {
-        drum.fade(0.3, 0, 1000);
+        drum.fade(0.5, 0, 1000);
         setTimeout(() => {
           drum.stop();
           setIsWakingUp(false);
@@ -68,77 +69,71 @@ export default function Home() {
       }
     });
 
-    drum.play();
-    setTimeout(() => manVoice.play(), 200); // بدء الصوت البشري فوراً
+    // 3. إعداد صوت الطبلة
+    const drum = new Howl({ src: ['/drum.mp3'], volume: 0.5, loop: true });
+
+    manVoice.play();
   };
 
   return (
-    <main className="min-h-screen bg-[#020617] text-white flex flex-col items-center justify-center p-4 overflow-hidden" dir="rtl">
+    <main className={`min-h-screen transition-colors duration-700 flex flex-col items-center justify-center p-4 ${isEvil ? 'bg-[#020617]' : 'bg-[#0f172a]'}`} dir="rtl">
       
-      {/* خلفية جمالية خفيفة */}
-      <div className="absolute inset-0 bg-[url('/stars-bg.png')] opacity-10 pointer-events-none"></div>
+      {/* زر التبديل بين الوضعين */}
+      <div className="absolute top-6 left-6 z-20">
+        <button 
+          onClick={() => setIsEvil(!isEvil)}
+          className={`px-6 py-2 rounded-full font-bold transition-all border-2 ${isEvil ? 'bg-red-600 border-red-400 text-white shadow-[0_0_15px_red]' : 'bg-yellow-500 border-yellow-300 text-black'}`}
+        >
+          {isEvil ? '😈 وضع الشرير' : '🌙 وضع المسحراتي'}
+        </button>
+      </div>
 
       <motion.div 
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="relative z-10 w-full max-w-md bg-slate-900/90 backdrop-blur-xl p-8 rounded-[2.5rem] border border-red-500/30 shadow-[0_0_80px_rgba(185,28,28,0.4)] text-center"
+        animate={{ borderColor: isEvil ? '#dc2626' : '#eab308' }}
+        className={`relative z-10 w-full max-w-md backdrop-blur-xl p-8 rounded-[2.5rem] border-2 shadow-2xl text-center ${isEvil ? 'bg-black/60 shadow-red-900/20' : 'bg-slate-900/80 shadow-black/50'}`}
       >
-        <h1 className="text-4xl font-bold text-red-600 mb-8 drop-shadow-[0_0_15px_rgba(239,68,68,0.7)] font-arabic">
-          💀 عمي عاطا.. نداء الظلام
+        <h1 className={`text-3xl font-bold mb-8 transition-colors ${isEvil ? 'text-red-600' : 'text-yellow-500'}`}>
+          {isEvil ? '💀 عمي عاطا المرعب' : '🥁 مسحراتي عمي عاطا'}
         </h1>
 
         <div className="relative mb-8 flex justify-center">
-          <motion.div
-            animate={isWakingUp ? { scale: [1, 1.08, 1], rotate: [0, 2, -2, 0] } : {}}
-            transition={{ repeat: Infinity, duration: 0.4 }}
-          >
-            <canvas 
-              ref={canvasRef} 
-              width={350} 
-              height={350} 
-              className="rounded-full shadow-[0_0_50px_rgba(185,28,28,0.6)] border-4 border-red-700/50" 
-            />
+          <motion.div animate={isWakingUp ? { scale: [1, 1.05, 1], rotate: [0, 1, -1, 0] } : {}}>
+            <canvas ref={canvasRef} width={320} height={320} className={`rounded-full border-4 transition-colors ${isEvil ? 'border-red-600 shadow-[0_0_30px_rgba(220,38,38,0.5)]' : 'border-yellow-500 shadow-xl'}`} />
           </motion.div>
         </div>
 
-        <div className="space-y-4">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value.substring(0, 15))}
-            placeholder="مين الضحية الجاية؟"
-            className="w-full p-5 rounded-2xl bg-slate-800/80 border border-red-900 text-white text-center text-2xl focus:ring-4 focus:ring-red-600 outline-none transition-all placeholder:text-slate-600"
-          />
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value.substring(0, 15))}
+          placeholder={isEvil ? "مين الضحية؟" : "مين هنصحيه؟"}
+          className="w-full p-4 rounded-2xl bg-slate-800/50 border border-slate-700 text-white text-center text-xl mb-4 outline-none focus:ring-2 focus:ring-red-500 transition-all"
+        />
 
+        <button
+          onClick={handleWakeUp}
+          disabled={isWakingUp}
+          className={`w-full py-5 rounded-2xl font-bold text-2xl shadow-xl transition-all active:scale-95 ${isEvil ? 'bg-red-700 hover:bg-red-600 text-white' : 'bg-yellow-500 hover:bg-yellow-400 text-black'}`}
+        >
+          {isWakingUp ? '🥁 جاري النداء...' : '🔔 ابدأ الآن'}
+        </button>
+
+        {showShare && (
           <button
-            onClick={handleWakeUp}
-            disabled={isWakingUp}
-            className="w-full py-5 rounded-2xl font-bold text-2xl bg-gradient-to-b from-red-600 to-red-900 text-white shadow-xl hover:brightness-110 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+            onClick={() => {
+              const text = `سمعت عمي عاطا وهو بيصحي ${name}؟ جربها من هنا: ${window.location.origin}`;
+              window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+            }}
+            className="w-full mt-4 py-4 rounded-2xl bg-green-600 text-white font-bold"
           >
-            {isWakingUp ? '😈 جاري استدعاء الروح...' : '🔥 ابدأ النداء المرعب'}
+            📲 مشاركة المقلب
           </button>
-        </div>
-
-        <AnimatePresence>
-          {showShare && (
-            <motion.button
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              onClick={() => {
-                const text = `سمعت عمي عاطا الشرير وهو بيصحي ${name}؟ جربها من هنا: ${window.location.origin}`;
-                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-              }}
-              className="w-full mt-4 py-4 rounded-2xl bg-green-700 text-white font-bold text-lg shadow-lg hover:bg-green-600 transition-colors"
-            >
-              📲 ابعت المقلب لـ {name}
-            </motion.button>
-          )}
-        </AnimatePresence>
+        )}
       </motion.div>
 
-      <footer className="mt-8 text-slate-700 text-sm text-center relative z-10">
-        <p>بواسطة طه 🌙 | ts643104@gmail.com</p>
-        <p className="mt-2 text-red-500/70 hover:underline cursor-pointer" onClick={() => window.location.href='/privacy-policy'}>سياسة الخصوصية</p>
+      <footer className="mt-8 text-slate-500 text-xs text-center">
+        <p>بواسطة طه 🌙</p>
+        <p className="mt-2 underline cursor-pointer" onClick={() => window.location.href='/privacy-policy'}>سياسة الخصوصية</p>
       </footer>
     </main>
   );
