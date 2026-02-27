@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 1. تفعيل وضع الإنتاج الصارم
+  // تفعيل وضع الإنتاج الصارم لتحسين الأداء والأمان
   reactStrictMode: true,
   swcMinify: true,
 
@@ -9,38 +9,33 @@ const nextConfig = {
       {
         source: '/(.*)',
         headers: [
-          // --- مستوى الحماية المتوسط (إعدادات المتصفح الأساسية) ---
-          
-          // يمنع تخمين نوع الملفات تماماً (Nosniff)
+          // 1. منع المتصفح من تخمين نوع الملفات (حماية من Nikto)
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           
-          // حماية ضد الـ Clickjacking (يمنع وضع موقعك في iframe)
+          // 2. منع وضع الموقع في iframe (حماية من Clickjacking)
           { key: 'X-Frame-Options', value: 'DENY' },
           
-          // تفعيل فلتر XSS في المتصفحات القديمة
+          // 3. تفعيل فلتر الحماية XSS في المتصفحات
           { key: 'X-XSS-Protection', value: '1; mode=block' },
 
-          // --- مستوى الحماية العالي (سياسات البيانات والتشفير) ---
-          
-          // إجبار المتصفح على استخدام HTTPS فقط لمدة سنة (HSTS)
+          // 4. إجبار استخدام HTTPS المشفر (HSTS)
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' },
           
-          // التحكم في البيانات المرسلة عند الانتقال لمواقع تانية
+          // 5. حماية خصوصية المصدر (Referrer Policy)
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           
-          // حماية الميكروفون والكاميرا (Permission Policy) - بيقفل الوصول ليهم تماماً
+          // 6. قفل الصلاحيات الحساسة (Permissions Policy)
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
 
-          // --- المستوى الأعلى (Content Security Policy - CSP) ---
-          // ده "البعبع" بتاع الهكرز؛ بيمنع أي سكريبت خارجي مجهول من العمل
+          // 7. سياسة أمان المحتوى (CSP) - النسخة المتوافقة مع جوجل أدسنس
           {
             key: 'Content-Security-Policy',
             value: "default-src 'self'; " +
-                   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com; " + // مسموح فقط بسكريبتاتك وجوجل أدسنس
+                   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://adservice.google.com https://www.googletagservices.com; " + 
                    "style-src 'self' 'unsafe-inline'; " +
-                   "img-src 'self' data: https://pagead2.googlesyndication.com; " +
-                   "connect-src 'self' https://pagead2.googlesyndication.com; " +
-                   "frame-src 'self' https://googleads.g.doubleclick.net;"
+                   "img-src 'self' data: https://pagead2.googlesyndication.com https://*.google-analytics.com; " +
+                   "connect-src 'self' https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; " +
+                   "frame-src 'self' https://googleads.g.doubleclick.net https://tpc.googlesyndication.com;"
           }
         ],
       },
